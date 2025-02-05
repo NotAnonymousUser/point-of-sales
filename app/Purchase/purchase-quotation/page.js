@@ -1,0 +1,620 @@
+"use client";
+import Layout from "@/app/components/Layout/Layout";
+import React, { useState } from "react";
+import { useColor } from "@/app/context/ColorContext";
+import CxRemarks from "@/app/components/fields/CXremarks/CxRemarks";
+import CxContents from "@/app/components/tables/CxContents";
+import CxAttachment from "@/app/components/tables/CxAttachment";
+import LogisticTab from "@/app/components/tables/CxLogistic";
+import CxAccounting from "@/app/components/tables/CxAccounting";
+import {
+  Paper,
+  Tabs,
+  Tab,
+  Box,
+} from "@mui/material";
+import { font } from "@/app/components/font/poppins";
+import SapDropDown from "@/app/components/fields/dropDown/customDropDown";
+import SapTextField from "@/app/components/fields/sapFields/sapTextField";
+import SapDateField from "@/app/components/fields/date/sapDateField";
+import CustomButton from "@/app/components/buttons/customButton/customButton";
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </div>
+  );
+}
+
+function Page() {
+  const [formData, setFormData] = useState({
+    businessPartner: "",
+    name: "",
+    contactPerson: "",
+    shipTo: "",
+    no: "",
+    status: "",
+    postingDate: "",
+    dueDate: "",
+    documentDate: "",
+    fromWarehouse: "",
+    toWarehouse: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const [rows, setRows] = useState([
+    {
+      item: "",
+      itemDescription: "",
+      quantity: "",
+      requiredDate: null,  // This will be set using DatePicker
+      quotedDate: null,    // This will be set using DatePicker
+      g_LAccount: "",
+      g_LAccountName: "",
+      taxCode: "",
+      total: "",
+    },
+  ]);
+
+  const handleInputChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedRows = [...rows];
+    updatedRows[index][name] = value;
+    setRows(updatedRows);
+  };
+
+  const handleAddRow = () => {
+    setRows([
+      ...rows,
+      {
+        item: "",
+        itemDescription: "",
+        quantity: 0,
+        requiredDate: null,
+        quotedDate: null,
+        g_LAccount: "",
+        g_LAccountName: "",
+        taxCode: "",
+        total: 0,
+      },
+    ]);
+  };
+
+  const handleDeleteRow = (index) => {
+    const updatedRows = rows.filter((_, i) => i !== index);
+    setRows(updatedRows);
+  };  
+
+  const [rowsA, setRowsA] = useState([
+    {
+      itemNo: 1,
+      targetpath: "",
+      filename: "",
+      attacheddate: "",
+      freetext: "",
+      copytotargetdocument: "",
+    },
+  ]);
+
+  const handleInputChangeA = (index, e) => {
+    const { name, value } = e.target;
+    const updatedRows = [...rowsA];
+    updatedRows[index][name] = value;
+    setRowsA(updatedRows);
+  };
+
+  const handleAddRowA = () => {
+    setRowsA([
+      ...rowsA,
+      {
+        itemNo: rowsA.length + 1,
+        targetpath: "",
+        filename: "",
+        attacheddate: "",
+        freetext: "",
+        copytotargetdocument: "",
+      },
+    ]);
+  };
+
+  const handleDeleteRowA = (index) => {
+    const updatedRows = rowsA.filter((_, rowIndex) => rowIndex !== index);
+    setRowsA(updatedRows);
+  };
+// LOGISTICS
+const [rowsL, setRowsL] = useState([
+  {
+    itemNo: 1,
+    targetpath: "",
+    filename: "",
+    attacheddate: "",
+    freetext: "",
+    copytotargetdocument: "",
+  },
+]);
+
+
+
+const handleDeleteRowL = (index) => {
+  const updatedRows = rowsA.filter((_, rowIndex) => rowIndex !== index);
+  setRowsL(updatedRows);
+};
+  const { secondaryColor, primaryColor } = useColor();
+  const [tabValue, setTabValue] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showCopyFromDropdown, setShowCopyFromDropdown] = useState(false);
+  const [buttonLabel, setButtonLabel] = useState("Add and Close");
+  const [copyFromOption, setCopyFromOption] = useState("");
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleOptionSelect = (label) => {
+    setButtonLabel(label); // Update the button label to the selected value
+    setShowDropdown(false); // Hide the dropdown after selection
+  };
+
+  const toggleCopyFromDropdown = () => {
+    setShowCopyFromDropdown(!showCopyFromDropdown);
+  };
+
+  const handleCopyFromOptionSelect = (option) => {
+    setCopyFromOption(option);
+    setShowCopyFromDropdown(false);
+  };
+
+  const fieldConfigs = [
+    { name: "item", label: "Item No." },
+    { name: "itemDescription", label: "Item Description." },
+    { name: "quantity", label: "Quantity" },
+    { name: "requiredDate", label: "Required Date" },
+    { name: "quotedDate", label: "Quoted Date." },
+    // { name: "g/LAccount", label: "G/L Account" },
+    // { name: "g/LAccountName", label: "G/L Account Name" },
+    { name: "taxCode", label: "Tax Code" },
+    { name: "total", label: "Total" },
+  ];
+  // Attachment
+  const fieldConfigsA = [
+    { name: "targetPath", label: "Browse" },
+    { name: "fileName", label: "File Name" },
+    { name: "attachmentDate", label: "Attachment Date" },
+  ];
+  // logistic
+  const fields = [
+    {
+      section: "left",
+      type: "text",
+      label: "Ship To",
+      showUploadButton: true,
+      name: "shipTo",
+    },
+    {
+      section: "left",
+      type: "text",
+      label: "Pay To",
+      showUploadButton: true,
+      name: "payTo",
+    },
+    {
+      section: "left",
+      type: "dropdown",
+      label: "Shipping Type",
+      name: "shippingType",
+    },
+
+    { section: "right", type: "dropdown", label: "Language", name: "language" },
+    {
+      section: "right",
+      type: "checkbox",
+      label: "Create Online Quotation",
+      name: "createQuotation",
+    },
+    {
+      section: "right",
+      type: "checkbox",
+      label: "Confirmed",
+      name: "confirmed",
+    },
+  ];
+
+  const accountingFields = {
+    leftFields: [
+      { type: "text", label: "Journal Remarks:", style: { width: "100%" } },
+      { type: "dropdown", label: "Payment Terms", width: "100%" },
+      { type: "dropdown", label: "Payment Method", width: "100%" },
+      { type: "date", label: "Manually Recalculate Due Date:", width: "150px" },
+      { type: "text", label: "Month +", style: { width: "200px" } },
+      { type: "text", label: "Days", style: { width: "200px" } },
+      { type: "text", label: "Cash Discount Date Offset:", style: { width: "100%" } },
+    ],
+    rightFields: [
+      { type: "text", label: "Business Partner Project:", style: { width: "100%" } },
+      { type: "remarks", label: "Create QR Code From", style: { width: "100%" } },
+      { type: "dropdown", label: "Indicator", width: "100%" },
+      { type: "text", label: "Federal Tax ID", style: { width: "100%" } },
+      { type: "text", label: "Order Number", style: { width: "100%" } },
+    ],
+    fileUploadLabel: "Referenced Document:",
+  };
+
+  const [totalBeforeDiscount, setTotalBeforeDiscount] = useState(0);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [freight, setFreight] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [totalPaymentDue, setTotalPaymentDue] = useState(0);
+  const [roundingEnabled, setRoundingEnabled] = useState(false);
+  const [roundedValue, setRoundedValue] = useState(0);
+
+  // Calculate discount and update total
+  const calculateDiscount = (discountValue) => {
+    const discountAmount = (totalBeforeDiscount * discountValue) / 100;
+    const totalAfterDiscount = totalBeforeDiscount - discountAmount;
+    updateTotalPaymentDue(totalAfterDiscount);
+  };
+
+  // Update the total payment due with other values
+  const updateTotalPaymentDue = (value) => {
+    let total =
+      parseFloat(value) + parseFloat(freight || 0) + parseFloat(tax || 0);
+    if (roundingEnabled) {
+      total = Math.round(total);
+    }
+    setTotalPaymentDue(total);
+    setRoundedValue(total);
+  };
+
+  return (
+    <Layout>
+      <main className="flex-1 p-3 bg-gray-100 flex justify-center items-center">
+        <div className={`${font.className}`}>
+          {/* Title Section */}
+          <Paper
+            elevation={3}
+            style={{
+              backgroundColor: "white",
+              border: "1px solid #d0d0d0",
+              borderRadius: "8px",
+              padding: "20px",
+              width: "100%",
+            }}
+          >
+            <p className="text-2xl font-bold text-black mt-3 ml-2">
+              Purchase Quotation
+            </p>
+            <hr className="border-t-2 border-gray-700 mt-5" />
+
+            <div className="grid grid-cols-2 mt-2 ml-2 mr-8 gap-72">
+              {/* Left column */}
+              <div className="space-y-2" style={{ width: "450px" }}>
+                <SapTextField label="Vendor:" secondaryColor={secondaryColor} />
+                <SapTextField label="Name:" secondaryColor={secondaryColor} />
+                <SapDropDown
+                  secondaryColor={secondaryColor}
+                  label="Contact Person:"
+                  option1="Branch 1"
+                  option2="Branch 2"
+                  option3="Branch 3"
+                />
+
+                <SapTextField
+                  label="Vendor Ref. No. "
+                  secondaryColor={secondaryColor}
+                />
+                <SapDropDown
+                  secondaryColor={secondaryColor}
+                  label="Local Currency:"
+                />
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    padding: "0px",
+                  }}
+                >
+                  <SapDropDown
+                    label="Group No. "
+                    secondaryColor={secondaryColor}
+                    style={{ width: "200px", padding: "0px 0px 0px 85px" }}
+                  />
+                  <SapTextField secondaryColor={secondaryColor}/>
+                </div>
+              </div>
+
+              {/* Right column */}
+
+              <div className="space-y-2" style={{ width: "450px" }}>
+              <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    padding: "0px",
+                  }}
+                >
+                  <SapDropDown
+                    label="Number:"
+                    secondaryColor={secondaryColor}
+                    style={{ width: "210px", padding: "0px 0px 0px 98px" }}
+                  />
+                  <SapTextField 
+                  secondaryColor={secondaryColor} />
+                </div>
+                <SapDropDown
+                  secondaryColor={secondaryColor}
+                  label="Status:"
+                  option="Select Status"
+                  option2="Open"
+                  option3="Closed"
+                />
+                <SapDateField
+                  secondaryColor={secondaryColor}
+                  label="Posting Date:"
+                />
+                <SapDateField
+                  secondaryColor={secondaryColor}
+                  label="Delivery Date:"
+                />
+                <SapDateField
+                  secondaryColor={secondaryColor}
+                  label="Document Date:"
+                />
+                <SapDateField
+                  label="Required Date:"
+                  secondaryColor={secondaryColor}
+                />
+              </div>
+            </div>
+          </Paper>
+
+          <div className="mt-1 mb-0"></div>
+
+          {/* middle Tab section */}
+
+          <Paper
+            elevation={3}
+            style={{
+              backgroundColor: secondaryColor,
+              border: "1px solid #d0d0d0",
+              borderRadius: "8px",
+              overflowX: "auto",
+              overflowY: "hidden",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              sx={{
+                fontWeight: "bold",
+                fontSize: "14px",
+                ".MuiTab-root": {
+                  padding: "2px 1px",
+                },
+                ".MuiTabs-flexContainer": {
+                  justifyContent: "left",
+                },
+              }}
+            >
+              <Tab
+                label="Contents"
+                sx={{ fontWeight: "bold", fontSize: "12px" }}
+              />
+              <Tab
+                label="Logistics"
+                sx={{ fontWeight: "bold", fontSize: "12px" }}
+              />
+              <Tab
+                label="Accounting"
+                sx={{ fontWeight: "bold", fontSize: "12px" }}
+              />
+              <Tab
+                label="Attachments"
+                sx={{ fontWeight: "bold", fontSize: "12px" , marginLeft:"5px"}}
+              />
+            </Tabs>
+
+            {/* Tab Panels */}
+            <div style={{ overflowX: "auto", whiteSpace: "nowrap" ,width:"1217px"}}>
+              <TabPanel value={tabValue} index={0}>
+                <CxContents
+                  tabValue={tabValue}
+                  rows={rows}
+                  primaryColor={primaryColor}
+                  handleInputChange={handleInputChange}
+                  handleDeleteRow={handleDeleteRow}
+                  handleAddRow={handleAddRow}
+                  fieldConfigs={fieldConfigs}
+                />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={1}>
+                <LogisticTab fields={fields} />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={2}>
+                <CxAccounting fields={accountingFields} />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={3}>
+                <CxAttachment
+                  tabValue={tabValue}
+                  rowsA={rowsA}
+                  primaryColor={primaryColor}
+                  handleInputChangeA={handleInputChangeA}
+                  handleDeleteRowA={handleDeleteRowA}
+                  handleAddRowA={handleAddRowA}
+                  fieldConfigsA={fieldConfigsA}
+                />
+              </TabPanel>
+            </div>
+          </Paper>
+          {/* bottom Tab section */}
+          <Paper
+            elevation={3}
+            style={{
+              backgroundColor: "white",
+              border: "1px solid #d0d0d0",
+              borderRadius: "8px",
+              padding: "20px",
+              width: "100%",
+              height: "100%",
+              marginTop: "4px",
+            }}
+          >
+            <div className="grid grid-cols-2 mt-2 ml-2 mr-8 gap-72">
+              {/* Left column */}
+              <div className="space-y-2" style={{ width: "450px" }}>
+                <SapDropDown label="Buyer:" secondaryColor={secondaryColor} />
+                <SapDropDown label="Owner:" secondaryColor={secondaryColor} />
+                <CxRemarks label="Remarks" secondaryColor={secondaryColor} />
+              </div>
+
+              {/* Right column */}
+              <div className="space-y-2" style={{ width: "450px" }}>
+                {/* Total Before Discount */}
+                <SapTextField
+                  label="Total Before Discount:"
+                  secondaryColor={secondaryColor}
+                  value={totalBeforeDiscount}
+                  onChange={(e) => setTotalBeforeDiscount(e.target.value)}
+                />
+
+                {/* Discount */}
+                <div className="space-y-2" style={{ width: "450px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      padding: "0px",
+                    }}
+                  >
+                    <SapDropDown
+                      label="Discount:"
+                      secondaryColor={secondaryColor}
+                      style={{ width: "200px", padding: "0px 0px 0px 85px" }}
+                    />
+                    <span className="mt-2">%</span>
+                    <SapTextField secondaryColor={secondaryColor}/>
+                  </div>
+                </div>
+
+                {/* Freight */}
+                <SapTextField
+                  label="Freight:"
+                  secondaryColor={secondaryColor}
+                  value={freight}
+                  onChange={(e) => setFreight(e.target.value)}
+                />
+                {/* Rounding */}
+                <div className="flex ml-2 ">
+                  <input
+                    type="checkbox"
+                   
+                    
+                  />
+                  <div className=" ml-2" style={{ width: "500px",}}>
+                    <SapTextField
+                      label="Rounding:"
+                      secondaryColor={secondaryColor}
+                    
+                    />
+                  </div>
+                </div>
+
+                {/* Tax */}
+                <SapTextField
+                  label="Tax:"
+                  secondaryColor={secondaryColor}
+                  value={tax}
+                  onChange={(e) => setTax(e.target.value)}
+                />
+
+                {/* Total Payment Due */}
+                <SapTextField
+                  label="Total Payment Due:"
+                  secondaryColor={secondaryColor}
+                  value={totalPaymentDue}
+                  disabled
+                />
+              </div>
+            </div>
+
+            {/* Buttons Section */}
+            <div style={{ marginTop: "20px", marginRight: "20px" }}>
+              <div
+                style={{
+                  justifyContent: "space-between",
+                  display: "flex",
+                  width: "100%",
+                }}
+              >
+                <div style={{ display: "flex", gap: "8px", marginLeft:  "10px" }}>
+
+                  <CustomButton
+                    isDropdown={true}
+                    options={["Add and View", "Add and Close"]}
+                    onOptionSelect={(option) => console.log(option)}
+                    primaryEnabled={true}
+                    padding="6px 12px"
+                    fontsize="12px"
+                  />
+                  <CustomButton
+                    title="Cancel"
+                    primaryEnabled={false}
+                    classes={`bg-slate-500 hover:bg-slate-600 rounded`}
+                    padding="6px 12px"
+                    fontsize="12px"
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {/* Copy From and Copy To Buttons */}
+                  <CustomButton
+                    primaryEnabled={true}
+                    title="Copy From"
+                    padding="8px"
+                    fontsize="12px"
+                    disabled={true} // Disable this button
+                  />
+                  <CustomButton
+                    primaryEnabled={true}
+                    title="Copy To"
+                    padding="8px"
+                    fontsize="12px"
+                    disabled={true} // Disable this button
+                  />
+                </div>
+              </div>
+            </div>
+          </Paper>
+        </div>
+      </main>
+    </Layout>
+  );
+}
+
+export default Page;

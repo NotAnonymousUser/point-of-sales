@@ -1,0 +1,610 @@
+"use client";
+import Layout from "@/app/components/Layout/Layout";
+import React, { useState } from "react";
+import { useColor } from "@/app/context/ColorContext";
+import CxContents from "@/app/components/tables/CxContents";
+import CxAttachment from "@/app/components/tables/CxAttachment";
+import {
+  Paper,
+  Tabs,
+  Tab,
+  Box,
+} from "@mui/material";
+import { font } from "@/app/components/font/poppins";
+import SapDropDown from "@/app/components/fields/dropDown/customDropDown";
+import SapTextField from "@/app/components/fields/sapFields/sapTextField";
+import SapDateField from "@/app/components/fields/date/sapDateField";
+import CustomButton from "@/app/components/buttons/customButton/customButton";
+import CxActions from "@/app/components/buttons/CxAction/CxAction";
+import CxRadio from "@/app/components/buttons/CxRadio/CxRadio";
+import Link from "next/link";
+import { HiOutlineClipboardDocumentList } from "react-icons/hi2";
+import PopupRD from "@/app/components/pop-up/popupRD";
+import { BsFolderSymlink } from "react-icons/bs";
+import Popup from "@/app/components/pop-up/popup";
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </div>
+  );
+}
+
+function Page() {
+  const [formData, setFormData] = useState({
+    businessPartner: "",
+    name: "",
+    contactPerson: "",
+    shipTo: "",
+    no: "",
+    status: "",
+    postingDate: "",
+    dueDate: "",
+    documentDate: "",
+    fromWarehouse: "",
+    toWarehouse: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const [rows, setRows] = useState([
+    {
+      item: "",
+      itemDescription: "",
+      quantity: "",
+      requiredDate: null,  // This will be set using DatePicker
+      quotedDate: null,    // This will be set using DatePicker
+      g_LAccount: "",
+      g_LAccountName: "",
+      taxCode: "",
+      total: "",
+    },
+  ]);
+
+  const handleInputChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedRows = [...rows];
+    updatedRows[index][name] = value;
+    setRows(updatedRows);
+  };
+
+  const handleAddRow = () => {
+    setRows([
+      ...rows,
+      {
+        item: "",
+        itemDescription: "",
+        quantity: 0,
+        requiredDate: null,
+        quotedDate: null,
+        g_LAccount: "",
+        g_LAccountName: "",
+        taxCode: "",
+        total: 0,
+      },
+    ]);
+  };
+
+  const handleDeleteRow = (index) => {
+    const updatedRows = rows.filter((_, rowIndex) => rowIndex !== index);
+    setRows(updatedRows);
+  };
+
+  const [rowsA, setRowsA] = useState([
+    {
+      itemNo: 1,
+      targetpath: "",
+      filename: "",
+      attacheddate: "",
+      freetext: "",
+      copytotargetdocument: "",
+    },
+  ]);
+
+  const handleInputChangeA = (index, e) => {
+    const { name, value } = e.target;
+    const updatedRows = [...rowsA];
+    updatedRows[index][name] = value;
+    setRowsA(updatedRows);
+  };
+
+  const handleAddRowA = () => {
+    setRowsA([
+      ...rowsA,
+      {
+        itemNo: rowsA.length + 1,
+        targetpath: "",
+        filename: "",
+        attacheddate: "",
+        freetext: "",
+        copytotargetdocument: "",
+      },
+    ]);
+  };
+
+  const handleDeleteRowA = (index) => {
+    const updatedRows = rowsA.filter((_, rowIndex) => rowIndex !== index);
+    setRowsA(updatedRows);
+  };
+
+  const { secondaryColor, primaryColor } = useColor();
+  const [tabValue, setTabValue] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showCopyFromDropdown, setShowCopyFromDropdown] = useState(false);
+  const [buttonLabel, setButtonLabel] = useState("Add and Close");
+  const [copyFromOption, setCopyFromOption] = useState("");
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleOptionSelect = (label) => {
+    setButtonLabel(label); // Update the button label to the selected value
+    setShowDropdown(false); // Hide the dropdown after selection
+  };
+
+  const toggleCopyFromDropdown = () => {
+    setShowCopyFromDropdown(!showCopyFromDropdown);
+  };
+
+  const handleCopyFromOptionSelect = (option) => {
+    setCopyFromOption(option);
+    setShowCopyFromDropdown(false);
+  };
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenR, setIsOpenR] = useState(false);
+
+  const [rowsP, setRowsP] = useState([
+    {
+      item: "",
+      itemDescription: "",
+      quantity: "",
+      requiredDate: null, // This will be set using DatePicker
+      quotedDate: null, // This will be set using DatePicker
+      g_LAccount: "",
+      g_LAccountName: "",
+      taxCode: "",
+      total: "",
+    },
+  ]);
+
+  const handleInputChangeP = (index, e) => {
+    const { name, value } = e.target;
+    const updatedRows = [...rowsP];
+    updatedRows[index][name] = value;
+    setRowsP(updatedRows);
+  };
+
+  const handleDeleteRowP = (index) => {
+    const updatedRows = rowsP.filter((_, rowIndex) => rowIndex !== index);
+    setRowsP(updatedRows);
+  };
+
+  const handleAddRowP = () => {
+    setRowsP([
+      ...rowsP,
+      {
+        item: "",
+        itemDescription: "",
+        quantity: 0,
+        requiredDate: null,
+        quotedDate: null,
+        g_LAccount: "",
+        g_LAccountName: "",
+        taxCode: "",
+        total: 0,
+      },
+    ]);
+  };
+  const [rowsR, setRowsR] = useState([
+    {
+      item: "",
+      itemDescription: "",
+      quantity: "",
+      requiredDate: null, // This will be set using DatePicker
+      quotedDate: null, // This will be set using DatePicker
+      g_LAccount: "",
+      g_LAccountName: "",
+      taxCode: "",
+      total: "",
+    },
+  ]);
+  const handleInputChangeR = (index, e) => {
+    const { name, value } = e.target;
+    const updatedRows = [...rowsR];
+    updatedRows[index][name] = value;
+    setRowsR(updatedRows);
+  };
+  const handleAddRowR = () => {
+    setRowsR([
+      ...rowsR,
+      {
+        item: "",
+        itemDescription: "",
+        quantity: 0,
+        requiredDate: null,
+        quotedDate: null,
+        g_LAccount: "",
+        g_LAccountName: "",
+        taxCode: "",
+        total: 0,
+      },
+    ]);
+  };
+  const handleDeleteRowR = (index) => {
+    const updatedRows = rowsR.filter((_, rowIndex) => rowIndex !== index);
+    setRowsR(updatedRows);
+  };
+  const fieldConfigsP = [
+    { name: "requiredDate", label: "Due Date" },
+    { name: "amount", label: "Amount" },
+    { name: "bankName", label: "Bank Name" },
+    { name: "Branch", label: "Branch" },
+    { name: "account", label: "Account" },
+    { name: "checkNo", label: "Check No." },
+  ];
+
+  const fieldConfigs = [
+    { name: "Selected", label: "Selected" },
+    { name: "documentNo", label: "Document No." },
+    { name: "installed", label: "Installed" },
+    { name: "documentType", label: "Document Type" },
+    { name: "requiredDate", label: "Date" },
+    { name: "total", label: "Total" },
+    { name: "wTax Amount", label: "WTax Amount" },
+    { name: "balanceDue", label: "Balance Due" },
+    { name: "cashDiscount", label: "Cash Discount %" },
+    { name: "totalRoundingAmount", label: "Total Rounding Amount"},
+    { name: "totalPayment", label: "Total Payment"},
+    { name: "overdueDays", label: "Overdue Days"},
+    { name: "blocked", label: "Blocked"},
+    { name: "paymentOrderRun", label: "Payment Order Run"},
+    { name: "blanketAgreement", label: "Blanket Agreement"},
+  ];
+  // Attachment
+  const fieldConfigsA = [
+    { name: "targetPath", label: "Browse" },
+    { name: "fileName", label: "File Name" },
+    { name: "attachmentDate", label: "Attachment Date" },
+  ];
+
+  const radioOptions = [
+    { label: "Customer", value: "customer", link:"/Banking/outgoing-payment" },
+    { label: "Vendor", value: "vendor", link:"/Banking/outgoing-payment" },
+    { label: "Account", value: "account", link: "/Banking/account-out" }, // Link to the account page
+  ];
+
+  return (
+    <Layout>
+      <main className="flex-1 p-3 bg-gray-100 flex justify-center items-center">
+        <div className={`${font.className}`}>
+          {/* Title Section */}
+          <Paper
+            elevation={3}
+            style={{
+              backgroundColor: "white",
+              border: "1px solid #d0d0d0",
+              borderRadius: "8px",
+              padding: "20px",
+              width: "100%",
+            }}
+          >
+            <p className="text-2xl font-bold text-black mt-3 ml-2">
+              Outgoing Payment
+            </p>
+            <hr className="border-t-2 border-gray-700 mt-5" />
+
+            <div className="grid grid-cols-2 mt-2 ml-2 mr-8 gap-72">
+              {/* Left column */}
+              <div className="space-y-2" style={{ width: "450px" }}>
+              <CxRadio options={radioOptions} />
+              <SapTextField label="Code:" secondaryColor={secondaryColor} />
+              <SapTextField label="Name:" secondaryColor={secondaryColor} />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    padding: "0px",
+                  }}
+                >
+                  <SapDropDown
+                    label="Pay To:"
+                    secondaryColor={secondaryColor}
+                    style={{ width: "230px", padding: "0px 0px 0px 100px" }}
+                  />
+                  <SapTextField
+                  secondaryColor={secondaryColor} width="160px"/>
+                </div>
+                <SapTextField label="Contact Person:" secondaryColor={secondaryColor} />
+                <SapTextField label="Project:" secondaryColor={secondaryColor} />
+                <SapTextField label="Blanket Agreement:" secondaryColor={secondaryColor} />
+              </div>
+
+              {/* Right column */}
+
+              <div className="space-y-2" style={{ width: "450px" }}>
+              <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    padding: "0px",
+                  }}
+                >
+                  <SapDropDown
+                    label="Number:"
+                    secondaryColor={secondaryColor}
+                    style={{ width: "210px", padding: "0px 0px 0px 98px" }}
+                  />
+                  <SapTextField 
+                  secondaryColor={secondaryColor} />
+                </div>
+                <SapDateField
+                  secondaryColor={secondaryColor}
+                  label="Posting Date:"
+                />
+                <SapDateField
+                  secondaryColor={secondaryColor}
+                  label="Due Date:"
+                />
+                <SapDateField
+                  secondaryColor={secondaryColor}
+                  label="Document Date:"
+                />
+                <SapTextField label="Reference:" secondaryColor={secondaryColor} />
+                <SapTextField label="Transaction No." secondaryColor={secondaryColor} />
+                <SapTextField label="WTax Code:" secondaryColor={secondaryColor} />
+                <SapTextField label="WTax Base Sum:" secondaryColor={secondaryColor} />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "10px",
+                    marginTop: "30px",
+                  }}
+                >
+                  <label
+                    style={{
+                      flexGrow: 0, // Prevents the label from expanding
+                      marginRight: "8px", // Adds a small space between the label and the box
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      //   marginLeft:"20px",
+                    }}
+                  >
+                    Referenced Document :
+                  </label>
+
+                  {/* Hidden file input */}
+                  <button onClick={() => setIsOpenR(true)} className="m-2">
+                    <HiOutlineClipboardDocumentList
+                      size={"25px"}
+                      color={primaryColor}
+                    />{" "}
+                    {/* Adding color to the icon */}
+                  </button>
+
+                  {/* Popup Component */}
+                  <PopupRD
+                    isOpen={isOpenR}
+                    onClose={() => setIsOpenR(false)}
+                    tabValue={tabValue}
+                    rows={rowsR}
+                    primaryColor={primaryColor}
+                    handleInputChange={handleInputChangeR}
+                    handleDeleteRow={handleDeleteRowR}
+                    handleAddRow={handleAddRowR}
+                    fieldConfigs={fieldConfigsP}
+                    secondaryColor={secondaryColor}
+                  />
+                </div>
+              </div>
+            </div>
+          </Paper>
+
+          <div className="mt-1 mb-0"></div>
+
+          {/* middle Tab section */}
+
+          <Paper
+            elevation={3}
+            style={{
+              backgroundColor: secondaryColor,
+              border: "1px solid #d0d0d0",
+              borderRadius: "8px",
+              overflowX: "auto",
+              overflowY: "hidden",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              sx={{
+                fontWeight: "bold",
+                fontSize: "14px",
+                ".MuiTab-root": {
+                  padding: "2px 1px",
+                },
+                ".MuiTabs-flexContainer": {
+                  justifyContent: "left",
+                },
+              }}
+            >
+              <Tab
+                label="Contents"
+                sx={{ fontWeight: "bold", fontSize: "12px" }}
+              />
+              
+              <Tab
+                label="Attachments"
+                sx={{ fontWeight: "bold", fontSize: "12px" , marginLeft:"5px"}}
+              />
+            </Tabs>
+
+            {/* Tab Panels */}
+            <div style={{ overflowX: "auto", whiteSpace: "nowrap",width:"1217px" }}>
+              <TabPanel value={tabValue} index={0}>
+                <CxContents
+                  tabValue={tabValue}
+                  rows={rows}
+                  primaryColor={primaryColor}
+                  handleInputChange={handleInputChange}
+                  handleDeleteRow={handleDeleteRow}
+                  handleAddRow={handleAddRow}
+                  fieldConfigs={fieldConfigs}
+                />
+              </TabPanel>
+
+              
+
+              <TabPanel value={tabValue} index={1}>
+                <CxAttachment
+                  tabValue={tabValue}
+                  rowsA={rowsA}
+                  primaryColor={primaryColor}
+                  handleInputChangeA={handleInputChangeA}
+                  handleDeleteRowA={handleDeleteRowA}
+                  handleAddRowA={handleAddRowA}
+                  fieldConfigsA={fieldConfigsA}
+                />
+              </TabPanel>
+            </div>
+          </Paper>
+          {/* bottom Tab section */}
+          <Paper
+            elevation={3}
+            style={{
+              backgroundColor: "white",
+              border: "1px solid #d0d0d0",
+              borderRadius: "8px",
+              padding: "20px",
+              width: "100%",
+              height: "100%",
+              marginTop: "4px",
+            }}
+          >
+            <div className="grid grid-cols-2 mt-2 ml-2 mr-8 gap-72">
+              {/* Left column */}
+              <div className="space-y-2" style={{ width: "450px" }}>
+                <SapTextField label="Remarks:" secondaryColor={secondaryColor} />
+                <SapTextField label="Journal Remarks:" secondaryColor={secondaryColor} />
+              </div>
+
+              {/* Right column */}
+              <div className="space-y-2" style={{ width: "450px" }}>
+              <div className="flex ml-2 ">
+                  <input
+                    type="checkbox"
+                   
+                    
+                  />
+                  <div className=" ml-2" style={{ width: "500px",}}>
+                    <SapTextField
+                      label="Payment on Amount:"
+                      secondaryColor={secondaryColor}
+                    
+                    />
+                  </div>
+                </div>
+                <SapTextField label="WTax Account:" secondaryColor={secondaryColor} />
+                <div className="flex">
+                  <div className="" style={{ width: "590px" }}>
+                    <SapTextField
+                      label="Total Payment Due:"
+                      secondaryColor={secondaryColor}
+                    />
+                  </div>
+                  <button onClick={() => setIsOpen(true)} className="m-2">
+                    <BsFolderSymlink size={"20px"} color={primaryColor} />
+                  </button>
+
+                  {/* Popup Component */}
+                  <Popup
+                    isOpen={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    tabValue={tabValue}
+                    rows={rowsP}
+                    primaryColor={primaryColor}
+                    handleInputChange={handleInputChangeP}
+                    handleDeleteRow={handleDeleteRowP}
+                    handleAddRow={handleAddRowP}
+                    fieldConfigs={fieldConfigsP}
+                    secondaryColor={secondaryColor}
+                  />
+                </div>
+                <SapTextField label="Open Balance:" secondaryColor={secondaryColor} />
+              </div>
+            </div>
+
+            {/* Buttons Section */}
+            <div style={{ marginTop: "20px", marginRight: "20px" }}>
+              <div
+                style={{
+                  justifyContent: "space-between",
+                  display: "flex",
+                  width: "100%",
+                }}
+              >
+                <div style={{ display: "flex", gap: "8px", marginLeft:  "10px" }}>
+
+                  <CustomButton
+                    title="Add"
+                    primaryEnabled={true}
+                    padding="6px 12px"
+                    fontsize="12px"
+                  />
+                  <CustomButton
+                    title="Cancel"
+                    primaryEnabled={false}
+                    classes={`bg-slate-500 hover:bg-slate-600 rounded`}
+                    padding="6px 12px"
+                    fontsize="12px"
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                <CxActions
+                    isDropdown={true}
+                    options={["Select All", "Delete All"]}
+                    onOptionSelect={(option) => console.log(option)}
+                    primaryEnabled={true}
+                    padding="6px 12px"
+                    fontsize="12px"
+                  />
+                  <CustomButton
+                    primaryEnabled={true}
+                    title="Add in Sequence"
+                    padding="8px"
+                    fontsize="12px"
+                  />
+                </div>
+              </div>
+            </div>
+          </Paper>
+        </div>
+      </main>
+    </Layout>
+  );
+}
+
+export default Page;
