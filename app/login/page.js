@@ -2,17 +2,22 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Lottie from "react-lottie-player";
+import dynamic from 'next/dynamic';
+
+const Lottie = dynamic(() => import('react-lottie-player'), {
+  ssr: false
+});
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [animationData, setAnimationData] = useState(null);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
-
-  const lottieRef = useRef(null); // Reference for the Lottie player
+  const lottieRef = useRef(null);
 
   useEffect(() => {
+    setMounted(true);
     // Fetch the Lottie animation JSON
     fetch("/grass-mowing.json")
       .then((response) => response.json())
@@ -25,6 +30,10 @@ export default function Login() {
     router.push("/dashboard");
   };
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-100"
@@ -35,12 +44,12 @@ export default function Login() {
       }}
     >
       {/* Lottie Animation Background */}
-      {animationData && (
+      {mounted && animationData && (
         <div
           className="absolute inset-0"
           style={{
             zIndex: 1,
-            pointerEvents: "none", // Prevent interactions
+            pointerEvents: "none",
           }}
         >
           <Lottie
@@ -52,12 +61,12 @@ export default function Login() {
               height: "140%",
               objectFit: "cover",
             }}
-            loop={false} // Play only once
+            loop={false}
             onComplete={() => {
               if (lottieRef.current && animationData) {
-                const totalFrames = animationData.op; // Total frames in the animation
-                const stopFrame = Math.max(totalFrames - 10, 0); // Stop a little earlier than the last frame
-                lottieRef.current.goToAndStop(stopFrame, true); // Freeze at a specific frame
+                const totalFrames = animationData.op;
+                const stopFrame = Math.max(totalFrames - 10, 0);
+                lottieRef.current.goToAndStop(stopFrame, true);
               }
             }}
           />

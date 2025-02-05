@@ -4,6 +4,12 @@ import { Box, Grid } from "@mui/material";
 import Layout from "../components/Layout/Layout";
 import LeftSection from "./LeftSection";
 import RightSection from "./RightSection";
+import dynamic from 'next/dynamic';
+
+// Dynamically import Layout with no SSR
+const DynamicLayout = dynamic(() => import("../components/Layout/Layout"), {
+  ssr: false
+});
 
 function POS() {
   const [cart, setCart] = useState([]);
@@ -27,10 +33,11 @@ function POS() {
   const [showCancelPopup, setShowCancelPopup] = useState(false);
   const [confirmedPurchases, setConfirmedPurchases] = useState([]);
   const [mounted, setMounted] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState(null);
 
-  // Add useEffect for client-side hydration
   useEffect(() => {
     setMounted(true);
+    setCurrentDateTime(new Date());
   }, []);
 
   const customers = [
@@ -745,19 +752,12 @@ function POS() {
       return;
     }
 
-    // Only format dates on the client side
+    if (!currentDateTime) return;
+
     const purchase = {
-      id: Date.now(),
-      date: mounted ? new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : '',
-      time: mounted ? new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }) : '',
+      id: `${currentDateTime.getTime()}-${confirmedPurchases.length}`,
+      date: currentDateTime.toISOString().split('T')[0],
+      time: currentDateTime.toTimeString().split(' ')[0],
       docNumber: `INV-${String(confirmedPurchases.length + 1).padStart(3, '0')}`,
       customerName: selectedCustomer.name,
       customerPhone: selectedCustomer.phone,
@@ -785,13 +785,13 @@ function POS() {
     setIsTaxActive(false);
   };
 
-  // Don't render until after hydration
-  if (!mounted) {
+  // Don't render until after hydration and datetime is set
+  if (!mounted || !currentDateTime) {
     return null;
   }
 
   return (
-    <Layout selectedCustomer={selectedCustomer}>
+    <DynamicLayout selectedCustomer={selectedCustomer}>
       <Box style={{ backgroundColor: "#d1ded1", minHeight: "100vh" }}>
         <Grid container spacing={2}>
           <div className="container mx-3 p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -830,14 +830,17 @@ function POS() {
               handleCalculatorInput={handleCalculatorInput}
               handleClear={handleClear}
               activePaymentMethod={activePaymentMethod}
+              setActivePaymentMethod={setActivePaymentMethod}
               handlePaymentSubmit={handlePaymentSubmit}
               applyDiscount={applyDiscount}
               isDiscountActive={isDiscountActive}
+              setIsDiscountActive={setIsDiscountActive}
               handleDiscountClick={handleDiscountClick}
               handlePaymentMethodClick={handlePaymentMethodClick}
               customers={customers}
               handleCustomerSelect={handleCustomerSelect}
               isTaxActive={isTaxActive}
+              setIsTaxActive={setIsTaxActive}
               handleTaxClick={handleTaxClick}
               applyTax={applyTax}
               cart={cart}
@@ -846,7 +849,7 @@ function POS() {
           </div>
         </Grid>
       </Box>
-    </Layout>
+    </DynamicLayout>
   );
 }
 

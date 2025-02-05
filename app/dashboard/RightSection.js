@@ -25,14 +25,17 @@ const RightSection = ({
   handleCalculatorInput,
   handleClear,
   activePaymentMethod,
+  setActivePaymentMethod,
   handlePaymentSubmit,
   applyDiscount,
   isDiscountActive,
+  setIsDiscountActive,
   handleDiscountClick,
   handlePaymentMethodClick,
   customers,
   handleCustomerSelect,
   isTaxActive,
+  setIsTaxActive,
   handleTaxClick,
   applyTax,
   cart,
@@ -43,12 +46,9 @@ const RightSection = ({
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
-  // Handle hydration mismatch and client-side rendering
   useEffect(() => {
     setMounted(true);
-    setIsClient(true);
   }, []);
 
   // Prevent multiple button selection
@@ -88,7 +88,7 @@ const RightSection = ({
     }
   };
 
-  // If not mounted yet, return null or loading state
+  // If not mounted yet, return null
   if (!mounted) {
     return null;
   }
@@ -178,7 +178,7 @@ const RightSection = ({
       style={{ width: "160%", marginLeft: "-34%", minHeight: "65vh", maxHeight: "850px" }}
     >
       {/* Only render date-sensitive content on client side */}
-      {isClient && (
+      {mounted && (
         <>
           {/* Customer Dropdown */}
           <div className="mb-4">
