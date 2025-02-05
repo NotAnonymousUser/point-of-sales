@@ -10,48 +10,43 @@ import { font } from "../font/poppins";
 import Image from "next/image";
 import { FiSearch } from "react-icons/fi"; // Importing search icon
 
-export default function Layout({ children }) {
+export default function Layout({ children, selectedCustomer }) {
   const { primaryColor, secondaryColor } = useColor();
   const [navbar, setNavbar] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(""); // Added local searchQuery state
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    // You can optionally pass the search query up if needed by the parent.
+    // Example: if (typeof onSearch === 'function') onSearch(e.target.value);
+  };
   const logout = true;
 
   return (
-    <div className={`${font.className} min-h-screen flex flex-col`}>
+    <div className={`${font.className}  flex flex-col`}>
       {/* Navbar / Header */}
       <header
-        className="flex items-center justify-between px-2 w-full border border-gray-100"
+        className="flex pt-4 h-20 justify-between px-2 w-full border border-gray-100"
         style={{
           backgroundImage: `linear-gradient(to bottom, white 50%, gray 300%)`,
         }}
       >
         <Image
           src="/full-logo.png"
-          className="w-auto h-16 p-2"
+          className="w-auto h-10"
           alt="NF logo"
           width={200}
           height={200}
         />
 
-        <h1 className="text-xl font-semibold ml-6 text-green-800">
-          Welcome To Nizamuddin Faridulhaq
+        <h1 className="text-2xl font-semibold ml-6 text-green-800">
+          Welcome {selectedCustomer ? selectedCustomer.name : 'to Nizamuddin Faridulhaq'}
         </h1>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex  space-x-4">
           
 
-          {/* Search Bar */}
-          <div
-            className="flex items-center bg-[#346939] rounded-full px-3 py-1 text-white"
-            style={{ minWidth: "200px", height:"40px" }}
-          >
-            <FiSearch size={20} className="mr-2" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="bg-transparent focus:outline-none text-white flex-1 text-sm placeholder-gray-200"
-            />
-           
-          </div>
+         
            <Link href="/">
             <CustomButton
               title="Logout"

@@ -1,257 +1,43 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Box, Grid } from "@mui/material";
-import Layout from "../components/Layout/Layout";
-import LeftSection from "./LeftSection";
-import RightSection from "./RightSection";
+import Layout from "@/app/components/Layout/Layout";
+import React, { useState } from "react";
+import { Paper, Tabs, Tab, Box } from "@mui/material";
+import { font } from "@/app/components/font/poppins";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { Navigation, Pagination } from "swiper/modules";
+import { FaShoppingCart } from "react-icons/fa";
+import Link from "next/link";
 
-function POS() {
-  const [cart, setCart] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [discount, setDiscount] = useState("");
-  const [tax, setTax] = useState("");
-  const [isTaxActive, setIsTaxActive] = useState(false);
-  const [suspendedOrders, setSuspendedOrders] = useState([]);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [input, setInput] = useState("");
-  const [activeTab, setActiveTab] = useState("Agricultural & Horticulture");
-  const [activeRightTab, setActiveRightTab] = useState("Products");
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </div>
+  );
+}
+
+function Page() {
   const [tabValue, setTabValue] = useState(0);
-  const [showSuspendPopup, setShowSuspendPopup] = useState(false);
-  const [activePaymentMethod, setActivePaymentMethod] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentDetails, setPaymentDetails] = useState(null);
   const [subTabValue, setSubTabValue] = useState("");
-  const [isDiscountActive, setIsDiscountActive] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showCancelPopup, setShowCancelPopup] = useState(false);
-  const [confirmedPurchases, setConfirmedPurchases] = useState([]);
-  const [mounted, setMounted] = useState(false);
-
-  // Add useEffect for client-side hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const customers = [
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "+92 300 1234567"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      phone: "+92 301 2345678"
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      phone: "+92 302 3456789"
-    }
-  ];
+  const [cartItems, setCartItems] = useState([]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    setSubTabValue("");
+    setSubTabValue(""); // Reset subtab when main tab changes
   };
 
   const handleSubTabChange = (subTab) => {
     setSubTabValue(subTab);
-  };
-
-  const handleSuspend = () => {
-    setSuspendedOrders([...suspendedOrders, { items: cart, total }]);
-    setCart([]);
-    setTotal(0);
-  };
-
-  const resumeOrder = (order) => {
-    setCart(order.items);
-    setTotal(order.total);
-    setSuspendedOrders(suspendedOrders.filter((o) => o !== order));
-  };
-
-  const deleteOrder = (order) => {
-    setSuspendedOrders(suspendedOrders.filter((o) => o !== order));
-  };
-
-  const addToCart = (product) => {
-    const existingItem = cart.find((cartItem) => cartItem.id === product.id);
-
-    if (existingItem) {
-      setCart(
-        cart.map((cartItem) =>
-          cartItem.id === product.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-
-    const updatedTotal = total + Number(product.price);
-    setTotal(updatedTotal);
-    setLoyaltyPoints(loyaltyPoints + Math.floor(Number(product.price) / 10));
-  };
-
-  const calculateTotalWithDiscount = () => {
-    const subtotal = cart.reduce(
-      (sum, item) => sum + parseFloat(item.price || 0) * item.quantity,
-      0
-    );
-    const discountAmount = (subtotal * (parseFloat(discount) || 0)) / 100;
-    const afterDiscount = parseFloat((subtotal - discountAmount).toFixed(2));
-    const taxAmount = (afterDiscount * (parseFloat(tax) || 0)) / 100;
-    const total = parseFloat((afterDiscount + taxAmount).toFixed(2));
-    return total.toFixed(2);
-  };
-
-  const increaseQuantity = (id) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      );
-      const newTotal = updatedCart.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
-      setTotal(newTotal);
-      return updatedCart;
-    });
-  };
-
-  const handleCalculatorInput = (value) => {
-    if (activePaymentMethod) {
-      setPaymentAmount(prev => prev + value);
-    } else if (isDiscountActive || isTaxActive) {
-      setInput(prev => prev + value);
-    } else {
-      setInput(prev => prev + value);
-    }
-  };
-
-  const handleClear = () => {
-    if (activePaymentMethod) {
-      const currentValue = paymentAmount;
-      if (currentValue.length > 0) {
-        setPaymentAmount(currentValue.slice(0, -1));
-      }
-    } else if (isDiscountActive || isTaxActive) {
-      const currentValue = input;
-      if (currentValue.length > 0) {
-        setInput(currentValue.slice(0, -1));
-      }
-    } else {
-      const currentValue = input;
-      if (currentValue.length > 0) {
-        setInput(currentValue.slice(0, -1));
-      }
-    }
-  };
-
-  const applyDiscount = () => {
-    const discountValue = parseFloat(input);
-    if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-      alert("Please enter a valid discount percentage between 0 and 100");
-      return;
-    }
-    setDiscount(discountValue);
-    setInput("");
-    setIsDiscountActive(false);
-    setActivePaymentMethod(null);
-  };
-
-  const handlePaymentMethodClick = (method) => {
-    setActivePaymentMethod(method);
-    setIsDiscountActive(false);
-    setPaymentAmount("");
-  };
-
-  const handlePaymentSubmit = () => {
-    if (!paymentAmount) {
-      alert("Please enter payment amount");
-      return;
-    }
-
-    const totalAmount = calculateTotalWithDiscount();
-    const paidAmount = parseFloat(paymentAmount);
-
-    if (paidAmount < totalAmount) {
-      alert("Payment amount is less than total amount");
-      return;
-    }
-
-    const change = paidAmount - totalAmount;
-    setPaymentDetails({
-      method: activePaymentMethod,
-      amount: paidAmount,
-      change: change
-    });
-    setInput("");
-    setPaymentAmount("");
-    setActivePaymentMethod(null);
-  };
-
-  const handleDiscountClick = () => {
-    setIsDiscountActive(true);
-    setIsTaxActive(false);
-    setActivePaymentMethod(null);
-    setInput("");
-  };
-
-  const handleTaxClick = () => {
-    setIsTaxActive(true);
-    setIsDiscountActive(false);
-    setActivePaymentMethod(null);
-    setInput("");
-  };
-
-  const applyTax = () => {
-    const taxValue = parseFloat(input);
-    if (isNaN(taxValue) || taxValue < 0 || taxValue > 100) {
-      alert("Please enter a valid tax percentage between 0 and 100");
-      return;
-    }
-    setTax(taxValue);
-    setInput("");
-    setIsTaxActive(false);
-    setActivePaymentMethod(null);
-  };
-
-  const handleCustomerSelect = (customer) => {
-    setSelectedCustomer(customer);
-  };
-
-  const handleCancelReceipt = () => {
-    setCart([]);
-    setDiscount("");
-    setTax("");
-    setPaymentAmount("");
-    setPaymentDetails(null);
-    setActivePaymentMethod(null);
-    setIsDiscountActive(false);
-    setIsTaxActive(false);
-    setInput("");
-  };
-
-  const decreaseQuantity = (id) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart
-        .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
-        )
-        .filter((item) => item.quantity > 0);
-
-      const newTotal = updatedCart.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
-      setTotal(newTotal);
-
-      return updatedCart;
-    });
   };
 
   const tabs = [
@@ -259,6 +45,7 @@ function POS() {
     "Sports Fields & Grounds",
     "Irrigation",
     "Power Generation",
+   
   ];
 
   const productsByTab = {
@@ -564,7 +351,7 @@ function POS() {
           name: "dia PLASTIC",
           code: "LSF092A",
           price: "100",
-          origin: "70ft 7302B 70'dia PLASTIC ADJ IMPACT (0.5″) ORIGIN TAIWAN",
+          origin: "70ft 7302B 70’dia PLASTIC ADJ IMPACT (0.5″) ORIGIN TAIWAN",
           image: "/impex-sprinkler.jpg",
           subtab: "Impact Sprinklers",
         },
@@ -722,132 +509,111 @@ function POS() {
           origin: "Model: EG6500CXS 5 Kva",
           image: "/EM10000.jpg",
         },
-      ],
+      ], // Default to an empty array
     },
     Laboratory: {
       subtabs: [],
-      products: [],
+      products: [], // Default to an empty array
     },
     "Safety items": {
       subtabs: [],
-      products: [],
+      products: [], // Default to an empty array
     },
   };
 
-  const handlePaymentConfirmation = () => {
-    if (!selectedCustomer) {
-      alert("Please select a customer before confirming payment");
-      return;
-    }
-
-    if (cart.length === 0) {
-      alert("Cart is empty");
-      return;
-    }
-
-    // Only format dates on the client side
-    const purchase = {
-      id: Date.now(),
-      date: mounted ? new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : '',
-      time: mounted ? new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }) : '',
-      docNumber: `INV-${String(confirmedPurchases.length + 1).padStart(3, '0')}`,
-      customerName: selectedCustomer.name,
-      customerPhone: selectedCustomer.phone,
-      items: cart.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      totalQuantity: cart.reduce((total, item) => total + item.quantity, 0),
-      totalPrice: calculateTotalWithDiscount(),
-      discount: discount ? parseFloat(discount) : 0,
-      tax: tax ? parseFloat(tax) : 0,
-      paymentMethod: activePaymentMethod
-    };
-
-    setConfirmedPurchases([...confirmedPurchases, purchase]);
-    setCart([]);
-    setDiscount("");
-    setTax("");
-    setPaymentAmount("");
-    setPaymentDetails("");
-    setActivePaymentMethod("");
-    setInput("");
-    setIsDiscountActive(false);
-    setIsTaxActive(false);
+  const addToCart = (product) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find(
+        (item) => item.product.id === product.id
+      );
+      if (existingItem) {
+        return prevItems.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prevItems, { product, quantity: 1 }];
+      }
+    });
   };
 
-  // Don't render until after hydration
-  if (!mounted) {
-    return null;
-  }
+  const decreaseQuantity = (productId) => {
+    setCartItems((prevItems) =>
+      prevItems
+        .map((item) =>
+          item.product.id === productId
+            ? { ...item, quantity: Math.max(0, item.quantity - 1) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce(
+      (sum, item) => sum + parseInt(item.product.price) * item.quantity,
+      0
+    );
+  };
+
+  const renderProducts = (products) =>
+    (products || []).map((product) => (
+      <SwiperSlide key={product.id}>
+        <div
+          className="border rounded-lg  p-2 bg-gray-100 flex flex-col items-center"
+          onClick={() => addToCart(product)}
+          style={{
+            minHeight: "18rem",
+            
+            width: "13rem", // Minimum height for the card
+          }}
+        >
+          <img
+            src={product.image}
+            alt={product.name}
+            className="rounded mb-2 w-28 h-24 object-cover"
+          />
+          <div className="bg-[#d9eddb] text-center rounded-lg px-4 py-2  mb-3">
+            <h3 className="text-lg font-bold">{product.name}</h3>
+          </div>
+          <p className="text-sm text-gray-500 text-left mb-1 w-full">
+            {product.origin}
+          </p>
+          <p className="text-sm font-semibold text-left w-full">
+            Code: {product.code}
+          </p>
+          <p className="text-md font-bold text-left w-full mt-2">
+            Price:${product.price}
+          </p>
+          {/* Add to Trolley Button */}
+          <div className="mt-auto w-full flex justify-center"></div>
+          {/* <button
+            className="bg-yellow-500 px-4 py-2 rounded text-white font-bold mt-4 hover:bg-yellow-600 hover:scale-105 transition-transform duration-200 flex items-center gap-2"
+            onClick={() => addToCart(product)}
+          >
+            Add to Trolley <FaShoppingCart className="text-white" />
+          </button> */}
+        </div>
+      </SwiperSlide>
+    ));
 
   return (
-    <Layout selectedCustomer={selectedCustomer}>
-      <Box style={{ backgroundColor: "#d1ded1", minHeight: "100vh" }}>
-        <Grid container spacing={2}>
-          <div className="container mx-3 p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            <LeftSection
-              cart={cart}
-              decreaseQuantity={decreaseQuantity}
-              increaseQuantity={increaseQuantity}
-              discount={discount}
-              paymentDetails={paymentDetails}
-              calculateTotalWithDiscount={calculateTotalWithDiscount}
-              setShowCancelPopup={setShowCancelPopup}
-              setShowSuspendPopup={setShowSuspendPopup}
-              showCancelPopup={showCancelPopup}
-              showSuspendPopup={showSuspendPopup}
-              handleCancelReceipt={handleCancelReceipt}
-              handleSuspend={handleSuspend}
-              suspendedOrders={suspendedOrders}
-              resumeOrder={resumeOrder}
-              deleteOrder={deleteOrder}
-              tax={tax}
-              handlePaymentConfirmation={handlePaymentConfirmation}
-            />
-
-            <RightSection
-              activeRightTab={activeRightTab}
-              setActiveRightTab={setActiveRightTab}
-              tabValue={tabValue}
-              handleTabChange={handleTabChange}
-              tabs={tabs}
-              productsByTab={productsByTab}
-              subTabValue={subTabValue}
-              handleSubTabChange={handleSubTabChange}
-              addToCart={addToCart}
-              input={input}
-              paymentAmount={paymentAmount}
-              handleCalculatorInput={handleCalculatorInput}
-              handleClear={handleClear}
-              activePaymentMethod={activePaymentMethod}
-              handlePaymentSubmit={handlePaymentSubmit}
-              applyDiscount={applyDiscount}
-              isDiscountActive={isDiscountActive}
-              handleDiscountClick={handleDiscountClick}
-              handlePaymentMethodClick={handlePaymentMethodClick}
-              customers={customers}
-              handleCustomerSelect={handleCustomerSelect}
-              isTaxActive={isTaxActive}
-              handleTaxClick={handleTaxClick}
-              applyTax={applyTax}
-              cart={cart}
-              confirmedPurchases={confirmedPurchases}
-            />
-          </div>
-        </Grid>
-      </Box>
+    <Layout>
+      <main className="w-full bg-[#b2c9b3] ">
+        <div className={` ${font.className}`} style={{width:"900px"}} >
+          {/* <Paper
+            elevation={3}
+            className="p-6 mb-4"
+            style={{
+              backgroundImage: `linear-gradient(to bottom, white 50%, gray 800%)`,
+            }}
+          >
+        
+        </div>
+      </main>
     </Layout>
   );
 }
 
-export default POS;
+export default Page;

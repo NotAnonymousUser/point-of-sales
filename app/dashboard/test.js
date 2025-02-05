@@ -1,257 +1,43 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Box, Grid } from "@mui/material";
-import Layout from "../components/Layout/Layout";
-import LeftSection from "./LeftSection";
-import RightSection from "./RightSection";
+import Layout from "@/app/components/Layout/Layout";
+import React, { useState } from "react";
+import { Paper, Tabs, Tab, Box } from "@mui/material";
+import { font } from "@/app/components/font/poppins";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { Navigation, Pagination } from "swiper/modules";
+import { FaShoppingCart } from "react-icons/fa";
+import Link from "next/link";
 
-function POS() {
-  const [cart, setCart] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [discount, setDiscount] = useState("");
-  const [tax, setTax] = useState("");
-  const [isTaxActive, setIsTaxActive] = useState(false);
-  const [suspendedOrders, setSuspendedOrders] = useState([]);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
-  const [input, setInput] = useState("");
-  const [activeTab, setActiveTab] = useState("Agricultural & Horticulture");
-  const [activeRightTab, setActiveRightTab] = useState("Products");
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </div>
+  );
+}
+
+function Page() {
   const [tabValue, setTabValue] = useState(0);
-  const [showSuspendPopup, setShowSuspendPopup] = useState(false);
-  const [activePaymentMethod, setActivePaymentMethod] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentDetails, setPaymentDetails] = useState(null);
   const [subTabValue, setSubTabValue] = useState("");
-  const [isDiscountActive, setIsDiscountActive] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showCancelPopup, setShowCancelPopup] = useState(false);
-  const [confirmedPurchases, setConfirmedPurchases] = useState([]);
-  const [mounted, setMounted] = useState(false);
-
-  // Add useEffect for client-side hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const customers = [
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "+92 300 1234567"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      phone: "+92 301 2345678"
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      phone: "+92 302 3456789"
-    }
-  ];
+  const [cartItems, setCartItems] = useState([]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    setSubTabValue("");
+    setSubTabValue(""); // Reset subtab when main tab changes
   };
 
   const handleSubTabChange = (subTab) => {
     setSubTabValue(subTab);
-  };
-
-  const handleSuspend = () => {
-    setSuspendedOrders([...suspendedOrders, { items: cart, total }]);
-    setCart([]);
-    setTotal(0);
-  };
-
-  const resumeOrder = (order) => {
-    setCart(order.items);
-    setTotal(order.total);
-    setSuspendedOrders(suspendedOrders.filter((o) => o !== order));
-  };
-
-  const deleteOrder = (order) => {
-    setSuspendedOrders(suspendedOrders.filter((o) => o !== order));
-  };
-
-  const addToCart = (product) => {
-    const existingItem = cart.find((cartItem) => cartItem.id === product.id);
-
-    if (existingItem) {
-      setCart(
-        cart.map((cartItem) =>
-          cartItem.id === product.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-
-    const updatedTotal = total + Number(product.price);
-    setTotal(updatedTotal);
-    setLoyaltyPoints(loyaltyPoints + Math.floor(Number(product.price) / 10));
-  };
-
-  const calculateTotalWithDiscount = () => {
-    const subtotal = cart.reduce(
-      (sum, item) => sum + parseFloat(item.price || 0) * item.quantity,
-      0
-    );
-    const discountAmount = (subtotal * (parseFloat(discount) || 0)) / 100;
-    const afterDiscount = parseFloat((subtotal - discountAmount).toFixed(2));
-    const taxAmount = (afterDiscount * (parseFloat(tax) || 0)) / 100;
-    const total = parseFloat((afterDiscount + taxAmount).toFixed(2));
-    return total.toFixed(2);
-  };
-
-  const increaseQuantity = (id) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      );
-      const newTotal = updatedCart.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
-      setTotal(newTotal);
-      return updatedCart;
-    });
-  };
-
-  const handleCalculatorInput = (value) => {
-    if (activePaymentMethod) {
-      setPaymentAmount(prev => prev + value);
-    } else if (isDiscountActive || isTaxActive) {
-      setInput(prev => prev + value);
-    } else {
-      setInput(prev => prev + value);
-    }
-  };
-
-  const handleClear = () => {
-    if (activePaymentMethod) {
-      const currentValue = paymentAmount;
-      if (currentValue.length > 0) {
-        setPaymentAmount(currentValue.slice(0, -1));
-      }
-    } else if (isDiscountActive || isTaxActive) {
-      const currentValue = input;
-      if (currentValue.length > 0) {
-        setInput(currentValue.slice(0, -1));
-      }
-    } else {
-      const currentValue = input;
-      if (currentValue.length > 0) {
-        setInput(currentValue.slice(0, -1));
-      }
-    }
-  };
-
-  const applyDiscount = () => {
-    const discountValue = parseFloat(input);
-    if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-      alert("Please enter a valid discount percentage between 0 and 100");
-      return;
-    }
-    setDiscount(discountValue);
-    setInput("");
-    setIsDiscountActive(false);
-    setActivePaymentMethod(null);
-  };
-
-  const handlePaymentMethodClick = (method) => {
-    setActivePaymentMethod(method);
-    setIsDiscountActive(false);
-    setPaymentAmount("");
-  };
-
-  const handlePaymentSubmit = () => {
-    if (!paymentAmount) {
-      alert("Please enter payment amount");
-      return;
-    }
-
-    const totalAmount = calculateTotalWithDiscount();
-    const paidAmount = parseFloat(paymentAmount);
-
-    if (paidAmount < totalAmount) {
-      alert("Payment amount is less than total amount");
-      return;
-    }
-
-    const change = paidAmount - totalAmount;
-    setPaymentDetails({
-      method: activePaymentMethod,
-      amount: paidAmount,
-      change: change
-    });
-    setInput("");
-    setPaymentAmount("");
-    setActivePaymentMethod(null);
-  };
-
-  const handleDiscountClick = () => {
-    setIsDiscountActive(true);
-    setIsTaxActive(false);
-    setActivePaymentMethod(null);
-    setInput("");
-  };
-
-  const handleTaxClick = () => {
-    setIsTaxActive(true);
-    setIsDiscountActive(false);
-    setActivePaymentMethod(null);
-    setInput("");
-  };
-
-  const applyTax = () => {
-    const taxValue = parseFloat(input);
-    if (isNaN(taxValue) || taxValue < 0 || taxValue > 100) {
-      alert("Please enter a valid tax percentage between 0 and 100");
-      return;
-    }
-    setTax(taxValue);
-    setInput("");
-    setIsTaxActive(false);
-    setActivePaymentMethod(null);
-  };
-
-  const handleCustomerSelect = (customer) => {
-    setSelectedCustomer(customer);
-  };
-
-  const handleCancelReceipt = () => {
-    setCart([]);
-    setDiscount("");
-    setTax("");
-    setPaymentAmount("");
-    setPaymentDetails(null);
-    setActivePaymentMethod(null);
-    setIsDiscountActive(false);
-    setIsTaxActive(false);
-    setInput("");
-  };
-
-  const decreaseQuantity = (id) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart
-        .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
-        )
-        .filter((item) => item.quantity > 0);
-
-      const newTotal = updatedCart.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
-      setTotal(newTotal);
-
-      return updatedCart;
-    });
   };
 
   const tabs = [
@@ -259,6 +45,8 @@ function POS() {
     "Sports Fields & Grounds",
     "Irrigation",
     "Power Generation",
+    "Laboratory",
+    "Safety items",
   ];
 
   const productsByTab = {
@@ -267,7 +55,7 @@ function POS() {
       products: [
         {
           id: 1,
-          name: "LAWN MOWER",
+          name: "LAWN MOWER 16″ NF",
           code: " LMLH07F",
           price: "100",
           origin: "LAWN MOWER 16″ NF MAKE: PAKISTANI",
@@ -276,7 +64,7 @@ function POS() {
         },
         {
           id: 2,
-          name: "CALTRIMMER",
+          name: "CALTRIMMER 10 BLADES″",
           code: "LMFP42C",
           price: "100",
           origin:
@@ -286,7 +74,7 @@ function POS() {
         },
         {
           id: 3,
-          name: "Oleomac",
+          name: "Oleomac 1500W 16″",
           code: "LMFE26E",
           price: "100",
           origin: "Oleomac 1500W 16″ Steel Deck / Italy",
@@ -304,7 +92,7 @@ function POS() {
         },
         {
           id: 5,
-          name: "ECHO CS-1201",
+          name: "ECHO CS-1201 116.3cc 36″",
           code: "TCSP05",
           price: "100",
           origin: "ECHO CS-1201 116.3cc 36″ TCSP05/Japan",
@@ -313,7 +101,7 @@ function POS() {
         },
         {
           id: 6,
-          name: "McCULLOCH",
+          name: "McCULLOCH 1400Watt",
           code: "TCSE02",
           price: "100",
           origin: "McCULLOCH 1400Watt 18″/20″ TCSE02/EEC",
@@ -322,7 +110,7 @@ function POS() {
         },
         {
           id: 7,
-          name: "MTD Troybilt",
+          name: "MTD Troybilt  55cc",
           code: "TCSP03",
           price: "100",
           origin: "MTD Troybilt TB5518 55cc, 2-STROKE, 18″ BAR",
@@ -331,7 +119,7 @@ function POS() {
         },
         {
           id: 8,
-          name: "IKRA/MTD",
+          name: "IKRA/MTD KS-1400 1400W ",
           code: "TCSE01",
           price: "100",
           origin: "IKRA/MTD KS-1400 1400W BAR  GERMANY",
@@ -340,7 +128,7 @@ function POS() {
         },
         {
           id: 9,
-          name: "Alko",
+          name: "MTD/Oleomac/Alko",
           code: "THTE19",
           price: "100",
           origin: "MTD/Oleomac/Alko 600W/230V, 22-24″ blade, Origin ITALY",
@@ -349,7 +137,7 @@ function POS() {
         },
         {
           id: 10,
-          name: "MTD ROVER",
+          name: "MTD ROVER 22.5cc",
           code: "THTP21",
           price: "100",
           origin:
@@ -359,7 +147,7 @@ function POS() {
         },
         {
           id: 11,
-          name: "STIHL",
+          name: "STIHL, HL94 Pole",
           code: "THTP23",
           price: "100",
           origin:
@@ -369,7 +157,7 @@ function POS() {
         },
         {
           id: 12,
-          name: "Cub Cadet",
+          name: "Cub Cadet 22.5cc",
           code: "THTP21B",
           price: "100",
           origin:
@@ -379,7 +167,7 @@ function POS() {
         },
         {
           id: 13,
-          name: "Troybily",
+          name: "Troybily Multi Function",
           code: "TB MULTI FUNCTION",
           price: "100",
           origin: "Troybily Multi Function Brush Cutter",
@@ -388,7 +176,7 @@ function POS() {
         },
         {
           id: 14,
-          name: "MTD CUB CADET",
+          name: "MTD CUB CADET 43cc",
           code: "TBCP15A",
           price: "100",
           origin: "MTD CUB CADET 43cc 2-CYCLE KAWASAK",
@@ -397,7 +185,7 @@ function POS() {
         },
         {
           id: 15,
-          name: "HONDA BLADE",
+          name: "HONDA 36cc BLADE",
           code: "TBCP15",
           price: "100",
           origin: "HONDA 36cc 4-CYCLE BLADE Honda Thailand",
@@ -406,7 +194,7 @@ function POS() {
         },
         {
           id: 16,
-          name: "MTD CUB-CADET",
+          name: "MTD CUB-CADET 34.4CC",
           code: "TBCP15B",
           price: "100",
           origin: "MTD CUB-CADET 34.4CC 2-CYCLE KAWASAKI",
@@ -425,7 +213,7 @@ function POS() {
       products: [
         {
           id: 17,
-          name: "GM FLEX",
+          name: "GREENMASTER FLEX",
           code: "Not Available",
           price: "100",
           origin: "GREENMASTER FLEX",
@@ -434,7 +222,7 @@ function POS() {
         },
         {
           id: 18,
-          name: "REELMASTER",
+          name: "REELMASTER 5610",
           code: "Not Available",
           price: "100",
           origin: "REELMASTER 5610",
@@ -443,7 +231,7 @@ function POS() {
         },
         {
           id: 19,
-          name: "GM 1600",
+          name: "GREENMASTER 1600",
           code: "Not Available",
           price: "100",
           origin: "GREENMASTER 1600",
@@ -452,7 +240,7 @@ function POS() {
         },
         {
           id: 20,
-          name: "RM 5410",
+          name: "REELMASTER 5410",
           code: "Not Available",
           price: "100",
           origin: "REELMASTER 5410",
@@ -488,7 +276,7 @@ function POS() {
         },
         {
           id: 24,
-          name: "dia BRASS",
+          name: "11550 90ft dia BRASS",
           code: "LSF111E",
           price: "100",
           origin: "11550 90ft dia BRASS ADJ IMPACT [0.75″MT] ORIGIN TAIWAN",
@@ -497,7 +285,7 @@ function POS() {
         },
         {
           id: 25,
-          name: " BRASS ADJ",
+          name: "11556 110ft BRASS ADJ",
           code: "LSF111F",
           price: "100",
           origin: "11556 110ft BRASS ADJ IMPACT [1.0″MT] ORIGIN TAIWAN",
@@ -506,7 +294,7 @@ function POS() {
         },
         {
           id: 26,
-          name: "BRASS ADJ",
+          name: "11557 156ft BRASS ADJ",
           code: "LMFP31C",
           price: "100",
           origin: "11557 156ft BRASS ADJ IMPACT [1.25″MT] ORIGIN TAIWAN",
@@ -543,7 +331,7 @@ function POS() {
       products: [
         {
           id: 29,
-          name: "SPRINKLER SET",
+          name: "JINLONG 50 SPRINKLER SET",
           code: "LSF121",
           price: "100",
           origin: "JINLONG 50 SPRINKLER SET (W/ENGINE+PUMP) ORIGIN CHINA",
@@ -552,7 +340,7 @@ function POS() {
         },
         {
           id: 30,
-          name: " FULL BIG GUN",
+          name: "NELSON F75 FULL BIG GUN",
           code: "LSF125A",
           price: "100",
           origin: "NELSON F75 FULL BIG GUN 100ft+ RADIUS ORIGIN USA",
@@ -561,16 +349,16 @@ function POS() {
         },
         {
           id: 31,
-          name: "dia PLASTIC",
+          name: "70ft 7302B 70’dia PLASTIC",
           code: "LSF092A",
           price: "100",
-          origin: "70ft 7302B 70'dia PLASTIC ADJ IMPACT (0.5″) ORIGIN TAIWAN",
+          origin: "70ft 7302B 70’dia PLASTIC ADJ IMPACT (0.5″) ORIGIN TAIWAN",
           image: "/impex-sprinkler.jpg",
           subtab: "Impact Sprinklers",
         },
         {
           id: 32,
-          name: "Plastic Sprinkler",
+          name: "Greenglow Plastic Sprinkler",
           code: "LSF126B",
           price: "100",
           origin: "Greenglow Plastic Sprinkler Full 3/4″ 8037 ORIGIN CHINA",
@@ -588,7 +376,7 @@ function POS() {
         },
         {
           id: 34,
-          name: "POP-UP",
+          name: "7800/11308/9600 POP-UP",
           code: "LSF102",
           price: "100",
           origin: "7800/11308/9600 POP-UP ADJ IMPACT [0.5″] ORIGIN TAIWAN",
@@ -597,7 +385,7 @@ function POS() {
         },
         {
           id: 35,
-          name: "Rotor pop-up",
+          name: "TORO T7 Rotor pop-up",
           code: "LSF100E1",
           price: "100",
           origin: "TORO T7 Rotor pop-up, 83ft radius ORIGIN MEXICO",
@@ -606,7 +394,7 @@ function POS() {
         },
         {
           id: 36,
-          name: "ADJ GEAR",
+          name: "TORO T5P 4″ ADJ GEAR",
           code: "LSF100E",
           price: "100",
           origin: "TORO T5P 4″ ADJ GEAR DRIVE ROTOR 50ft ORIGIN USA",
@@ -615,7 +403,7 @@ function POS() {
         },
         {
           id: 37,
-          name: "ADJ Sprinkler",
+          name: "2ARM Adjustable Sprinkler",
           code: "Not Available",
           price: "100",
           origin: "2ARM Adjustable Sprinkler",
@@ -624,7 +412,7 @@ function POS() {
         },
         {
           id: 38,
-          name: "HELICOPTER",
+          name: "11621-C HELICOPTER",
           code: "LSF070",
           price: "100",
           origin: "11621-C HELICOPTER REVOLVING SPRINKLER ORIGIN TAIWAN",
@@ -633,7 +421,7 @@ function POS() {
         },
         {
           id: 39,
-          name: "POLY",
+          name: "W2026A FROG SHAPE POLY",
           code: "LSF067B",
           price: "100",
           origin: "W2026A FROG SHAPE POLY RESIN SPRAY HEAD ORIGIN TAIWAN",
@@ -642,7 +430,7 @@ function POS() {
         },
         {
           id: 40,
-          name: "STATIONARY",
+          name: "7306R 30×15′ RECTANGULAR",
           code: "LSF088",
           price: "100",
           origin: "7306R 30×15′ RECTANGULAR HOLE STATIONARY ORIGIN TAIWAN",
@@ -651,7 +439,7 @@ function POS() {
         },
         {
           id: 41,
-          name: "PISTOL GRIP",
+          name: "Brass head pistol grip",
           code: "LSF017D",
           price: "100",
           origin: "Brass head pistol grip hose nozzle W0514RA-A",
@@ -660,7 +448,7 @@ function POS() {
         },
         {
           id: 42,
-          name: "METAL GUN",
+          name: "INSULATED METAL GUN",
           code: "LSF023B",
           price: "100",
           origin: "11108 5-FUNCTION INSULATED METAL GUN",
@@ -669,7 +457,7 @@ function POS() {
         },
         {
           id: 43,
-          name: "AQUA GUN ",
+          name: "PLASTIC AQUA GUN ",
           code: "LSF019A",
           price: "100",
           origin: "507A/4010 PLASTIC AQUA GUN W/ADAPTER",
@@ -722,132 +510,237 @@ function POS() {
           origin: "Model: EG6500CXS 5 Kva",
           image: "/EM10000.jpg",
         },
-      ],
+      ], // Default to an empty array
     },
     Laboratory: {
       subtabs: [],
-      products: [],
+      products: [], // Default to an empty array
     },
     "Safety items": {
       subtabs: [],
-      products: [],
+      products: [], // Default to an empty array
     },
   };
 
-  const handlePaymentConfirmation = () => {
-    if (!selectedCustomer) {
-      alert("Please select a customer before confirming payment");
-      return;
-    }
-
-    if (cart.length === 0) {
-      alert("Cart is empty");
-      return;
-    }
-
-    // Only format dates on the client side
-    const purchase = {
-      id: Date.now(),
-      date: mounted ? new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : '',
-      time: mounted ? new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }) : '',
-      docNumber: `INV-${String(confirmedPurchases.length + 1).padStart(3, '0')}`,
-      customerName: selectedCustomer.name,
-      customerPhone: selectedCustomer.phone,
-      items: cart.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      totalQuantity: cart.reduce((total, item) => total + item.quantity, 0),
-      totalPrice: calculateTotalWithDiscount(),
-      discount: discount ? parseFloat(discount) : 0,
-      tax: tax ? parseFloat(tax) : 0,
-      paymentMethod: activePaymentMethod
-    };
-
-    setConfirmedPurchases([...confirmedPurchases, purchase]);
-    setCart([]);
-    setDiscount("");
-    setTax("");
-    setPaymentAmount("");
-    setPaymentDetails("");
-    setActivePaymentMethod("");
-    setInput("");
-    setIsDiscountActive(false);
-    setIsTaxActive(false);
+  const addToCart = (product) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find(
+        (item) => item.product.id === product.id
+      );
+      if (existingItem) {
+        return prevItems.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prevItems, { product, quantity: 1 }];
+      }
+    });
   };
 
-  // Don't render until after hydration
-  if (!mounted) {
-    return null;
-  }
+  const decreaseQuantity = (productId) => {
+    setCartItems((prevItems) =>
+      prevItems
+        .map((item) =>
+          item.product.id === productId
+            ? { ...item, quantity: Math.max(0, item.quantity - 1) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce(
+      (sum, item) => sum + parseInt(item.product.price) * item.quantity,
+      0
+    );
+  };
+
+  const renderProducts = (products) =>
+    (products || []).map((product) => (
+      <SwiperSlide key={product.id}>
+        <div
+          className="border rounded-lg shadow-lg p-2 bg-gray-100 flex flex-col items-center"
+          style={{
+            minHeight: "26rem", // Minimum height for the card
+          }}
+        >
+          <img
+            src={product.image}
+            alt={product.name}
+            className="rounded mb-2 w-48 h-44 object-cover"
+          />
+          <div className="bg-[#d9eddb] text-center rounded-lg px-4 py-2 mb-3">
+            <h3 className="text-lg font-bold">{product.name}</h3>
+          </div>
+          <p className="text-sm text-gray-500 text-left mb-1 w-full">
+            {product.origin}
+          </p>
+          <p className="text-sm font-semibold text-left w-full">
+            Code: {product.code}
+          </p>
+          <p className="text-md font-bold text-left w-full mt-2">
+            Price:${product.price}
+          </p>
+          {/* Add to Trolley Button */}
+          <div className="mt-auto w-full flex justify-center"></div>
+          <button
+            className="bg-yellow-500 px-4 py-2 rounded text-white font-bold mt-4 hover:bg-yellow-600 hover:scale-105 transition-transform duration-200 flex items-center gap-2"
+            onClick={() => addToCart(product)}
+          >
+            Add to Trolley <FaShoppingCart className="text-white" />
+          </button>
+        </div>
+      </SwiperSlide>
+    ));
 
   return (
-    <Layout selectedCustomer={selectedCustomer}>
-      <Box style={{ backgroundColor: "#d1ded1", minHeight: "100vh" }}>
-        <Grid container spacing={2}>
-          <div className="container mx-3 p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            <LeftSection
-              cart={cart}
-              decreaseQuantity={decreaseQuantity}
-              increaseQuantity={increaseQuantity}
-              discount={discount}
-              paymentDetails={paymentDetails}
-              calculateTotalWithDiscount={calculateTotalWithDiscount}
-              setShowCancelPopup={setShowCancelPopup}
-              setShowSuspendPopup={setShowSuspendPopup}
-              showCancelPopup={showCancelPopup}
-              showSuspendPopup={showSuspendPopup}
-              handleCancelReceipt={handleCancelReceipt}
-              handleSuspend={handleSuspend}
-              suspendedOrders={suspendedOrders}
-              resumeOrder={resumeOrder}
-              deleteOrder={deleteOrder}
-              tax={tax}
-              handlePaymentConfirmation={handlePaymentConfirmation}
-            />
+    <Layout>
+      <main className="w-full bg-[#b2c9b3] p-4">
+        <div className={`w-full ${font.className}`}>
+          <Paper
+            elevation={3}
+            className="p-6 mb-4"
+            style={{
+              backgroundImage: `linear-gradient(to bottom, white 50%, gray 800%)`,
+            }}
+          >
+            <p className="text-2xl font-bold text-black">Product Categories:</p>
+            <hr className="border-t-2 border-gray-300 my-4" />
+            <Tabs value={tabValue} onChange={handleTabChange}>
+              {tabs.map((label, index) => (
+                <Tab
+                  key={index}
+                  label={label}
+                  style={{
+                    color: "green",
+                    fontWeight: tabValue === index ? "bold" : "normal",
+                  }}
+                />
+              ))}
+            </Tabs>
+          </Paper>
+          <div className="flex flex-col lg:flex-row gap-4">
+            <Paper elevation={3} className="p-6 flex-grow">
+              {tabs.map((tab, index) => (
+                <TabPanel key={index} value={tabValue} index={index}>
+                  {productsByTab[tab]?.subtabs?.length > 0 ? (
+                    <div className="mb-4">
+                      <div className="flex gap-4 mt-0">
+                        {productsByTab[tab].subtabs.map((subtab) => (
+                          <button
+                            key={subtab}
+                            onClick={() => handleSubTabChange(subtab)}
+                            className={`px-4 py-2 rounded ${
+                              subTabValue === subtab
+                                ? "bg-green-600 text-white font-bold"
+                                : "bg-gray-200 hover:bg-gray-300"
+                            }`}
+                          >
+                            {subtab}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
-            <RightSection
-              activeRightTab={activeRightTab}
-              setActiveRightTab={setActiveRightTab}
-              tabValue={tabValue}
-              handleTabChange={handleTabChange}
-              tabs={tabs}
-              productsByTab={productsByTab}
-              subTabValue={subTabValue}
-              handleSubTabChange={handleSubTabChange}
-              addToCart={addToCart}
-              input={input}
-              paymentAmount={paymentAmount}
-              handleCalculatorInput={handleCalculatorInput}
-              handleClear={handleClear}
-              activePaymentMethod={activePaymentMethod}
-              handlePaymentSubmit={handlePaymentSubmit}
-              applyDiscount={applyDiscount}
-              isDiscountActive={isDiscountActive}
-              handleDiscountClick={handleDiscountClick}
-              handlePaymentMethodClick={handlePaymentMethodClick}
-              customers={customers}
-              handleCustomerSelect={handleCustomerSelect}
-              isTaxActive={isTaxActive}
-              handleTaxClick={handleTaxClick}
-              applyTax={applyTax}
-              cart={cart}
-              confirmedPurchases={confirmedPurchases}
-            />
+                  {productsByTab[tab]?.products?.length === 0 ? (
+                    <p>No products available for this tab.</p>
+                  ) : (
+                    <div className="relative max-w-screen-lg mx-auto">
+                      <Swiper
+                        navigation={{
+                          prevEl: ".custom-prev",
+                          nextEl: ".custom-next",
+                        }}
+                        pagination={{ clickable: true }}
+                        spaceBetween={20}
+                        slidesPerView={3}
+                        modules={[Navigation]}
+                        breakpoints={{
+                          320: { slidesPerView: 1 },
+                          640: { slidesPerView: 2 },
+                          1024: { slidesPerView: 3 },
+                        }}
+                        className="max-w-full overflow-hidden"
+                      >
+                        {renderProducts(
+                          productsByTab[tab]?.products.filter(
+                            (product) =>
+                              !subTabValue || product.subtab === subTabValue
+                          )
+                        )}
+                      </Swiper>
+
+                      {/* Custom Navigation Buttons */}
+                      <button className="custom-prev absolute top-1/2 left-[-2rem] transform -translate-y-1/2 bg-gray-300 text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-400 transition z-50">
+                        &lt;
+                      </button>
+                      <button className="custom-next absolute top-1/2 right-[-2rem] transform -translate-y-1/2 bg-gray-300 text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-400 transition z-50">
+                        &gt;
+                      </button>
+                    </div>
+                  )}
+                </TabPanel>
+              ))}
+            </Paper>
+            <Paper elevation={3} className="p-6 lg:w-1/4 h-fit sticky top-4">
+              <h2 className="text-lg font-bold mb-4">Current Orders</h2>
+              {cartItems.length === 0 ? (
+                <p>No items in cart.</p>
+              ) : (
+                <div>
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.product.id}
+                      className="flex justify-between items-center mb-2 border-b pb-2"
+                    >
+                      <span>
+                        {item.product.name} ({item.product.code})
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => decreaseQuantity(item.product.id)}
+                          className="px-2 py-0.5 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          -
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button
+                          onClick={() => addToCart(item.product)}
+                          className="px-2 py-0.5 bg-green-800 text-white rounded hover:bg-green-600"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="font-bold mt-4 text-right">
+                    Subtotal: ${calculateSubtotal()}
+                  </div>
+                  <div className="text-right">Discount: $0</div>
+                  <div className="font-bold text-right">
+                    Total Sales Tax: $0
+                  </div>
+                  <hr className="my-2" />
+                  <div className="font-bold text-right">
+                    Total: ${calculateSubtotal()}
+                  </div>
+                  <Link href="/order-summary">
+                    <button className="bg-green-600 w-full mt-4 py-2 rounded text-white font-bold hover:bg-green-500 transition">
+                      Confirmation
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </Paper>
           </div>
-        </Grid>
-      </Box>
+        </div>
+      </main>
     </Layout>
   );
 }
 
-export default POS;
+export default Page;

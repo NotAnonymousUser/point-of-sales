@@ -1,0 +1,8 @@
+.table-header {
+  background-color: #e0ffe0;
+}
+
+.table-container {
+  max-height: 200px;
+  overflow-y: auto;
+} 
